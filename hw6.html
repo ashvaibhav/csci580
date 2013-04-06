@@ -1,0 +1,56 @@
+<html>
+<head>
+<style type='text/css'>
+	canvas{
+		background:#000000;
+	}
+</style>
+<script type='text/javascript' src='hw6.js'></script>
+</head>
+<body> <!--  onload='document.getElementById("canvas1").addEventListener("mousedown", showMousePosition, false);'> -->
+	<div id='status'></div>
+	<div id='status2'></div>
+	<div id='form'>
+		<!-- Default Camera
+			<input type=checkbox id='camera' value='y'><BR>
+	
+		Rotate Object
+			<input type=radio name=rotate value='x'>RotX
+			<input type=radio name=rotate value='y'>RotY
+			<input type=radio name=rotate value='z'>RotZ
+			<input id='rotDeg' type='text'>Degree<BR>
+		Translate Object
+			<input id='tx' type='text'>Tx
+			<input id='ty'type='text'>Ty
+			<input id='tz' type='text'>Tz<BR>
+		Scale Object
+			<input id='sx' type='text'>Sx
+			<input id='sy' type='text'>Sy
+			<input id='sz' type='text'>Sz<BR>
+	 -->
+	Shading Algorithm
+			<!-- <input type=radio name=shader value='FLAT'>FLAT -->
+			<input type=radio name=shader value='GOURAUD'>GOURAUD
+			<input type=radio name=shader CHECKED value='PHONG'>PHONG<BR>
+		Texture Mapping
+			<input id='texture' type='checkbox' CHECKED>
+		<!-- Noise
+			<input id='noise' type='checkbox' ><BR>
+		Wireframe (yellow colored)
+			<input id='wf' type='checkbox'><BR> -->
+	</div>
+	<input id='file' type='file' value = 'Object File' onChange='javascript:main(event);'>
+	<input id='tfile' type='file' value='Texture File' onChange='javascript:loadTextureFile(event);'>
+	<!-- <input type='button' value='LoadTexture' onclick='javascript:loadFile();'> -->
+	<input type='button' value='RENDER' onClick='javascript:render();'>
+	<!-- Animation choices
+			<input type=radio name=animation value='FOV'>FOV
+			<input type=radio name=animation  value='La'>Ambient Light
+			<input type=radio name=animation CHECKED value='proceduralTexture'>Texture Mapping
+	<input id='anim' type='button' value='ANIMATE' onClick='javascript:animate();'> -->
+	<div id='data'></div>
+	<canvas id='canvas1' width='256', height='256'>
+	</canvas>
+		
+</body>
+</html>
