@@ -669,12 +669,13 @@ function showFinalImage(vertices, imageData, data){
 		jitterY:0,
 		jitContent:
 					[
-						{	x:-0.52,	y:0.38,		i:0.128},
+						{x:0,			y:0,		i:0}
+						/*{	x:-0.52,	y:0.38,		i:0.128},
 						{	x:0.41, 	y:0.56,		i:0.119},
 						{	x:0.27, 	y:0.08,		i:0.294},
 						{	x:-0.17, 	y:-0.29,	i:0.249},
 						{	x:0.58, 	y:-0.55,	i:0.104},
-						{	x:-0.31, 	y:-0.71,	i:0.106}
+						{	x:-0.31, 	y:-0.71,	i:0.106}*/
 					]
 	};
 	var imageDataContent= new Array();
@@ -736,23 +737,27 @@ function showFinalImage(vertices, imageData, data){
 
 function antiAlias(imageData, imageDataContent, jitBox){
 	var len = jitBox?jitBox.jitContent.length:0; if(len!=imageDataContent.length) console.log("AssertionFailed antiAlias: imageDataContent size != jitter size");
-	
+	var tempNew = "";
+	var orig = "";
 	for(var jitIndex=0;jitIndex<len;jitIndex++){
 		for(var i=0;i<imageDataContent[jitIndex].length;i++){			
 			for(var j=0;j<imageDataContent[jitIndex][i].length;j++){
 				if(imageData[i][j]){
-					imageData[i][j].r += imageDataContent[jitIndex][i][j]?imageDataContent[jitIndex][i][j].r:0;
-					imageData[i][j].g += imageDataContent[jitIndex][i][j]?imageDataContent[jitIndex][i][j].g:0;
-					imageData[i][j].b += imageDataContent[jitIndex][i][j]?imageDataContent[jitIndex][i][j].b:0;
+					//copying the complete latest pixel and adding r,g,b
+					orig = imageData[i][j];
+					copyVertex(imageData[i][j], imageDataContent[jitIndex][i][j]);
+					imageData[i][j].r = imageData[i][j].r?imageData[i][j].r+orig.r:orig.r;
+					imageData[i][j].g = imageData[i][j].g?imageData[i][j].r+orig.g:orig.g;
+					imageData[i][j].b = imageData[i][j].b?imageData[i][j].r+orig.b:orig.b;
 				}
 				else{
-					if(imageData[i].length>0){
-						imageData[i][j] = imageDataContent[jitIndex][i][j];
+					if(imageData[i].length==0){
+						imageData[i] = new Array();						
 					}
-					else{
-						imageData[i] = new Array();
-						imageData[i][j] = imageDataContent[jitIndex][i][j];
-					}
+					imageData[i][j] = imageDataContent[jitIndex][i][j]?imageDataContent[jitIndex][i][j]:{};
+					imageData[i][j].r = imageData[i][j].r?imageData[i][j].r:0;
+					imageData[i][j].g = imageData[i][j].g?imageData[i][j].g:0;
+					imageData[i][j].b = imageData[i][j].b?imageData[i][j].b:0;
 				}
 			}
 		}
