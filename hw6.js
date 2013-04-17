@@ -529,7 +529,7 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 			newCamSpaceVertex.y = vertex[1]/vertex[3]
 			newCamSpaceVertex.z = vertex[2]/vertex[3]
 			camSpaceVertices.push(newCamSpaceVertex);
-			newVertices.camSpaceCoords = newCamSpaceVertex;
+			newVertex.camSpaceCoords = newCamSpaceVertex;
 		}
 
 		newVertices.push(newVertex)
@@ -901,7 +901,11 @@ function sortVertices(verticeA, verticeB, verticeC){
 	Javascript does not provide function to duplicate an object. Hence this code.
 */
 function copyVertex(dest, orig){
-	dest.x = orig.x;
+	for(var prop in orig){
+		if(orig.hasOwnProperty(prop))
+			dest[prop] = orig[prop];
+	}
+	/*dest.x = orig.x;
 	dest.y = orig.y;
 	dest.z = orig.z;
 	dest.r = orig.r;
@@ -915,7 +919,7 @@ function copyVertex(dest, orig){
 	dest.ny = orig.ny;
 	dest.nz = orig.nz;
 	dest.U = orig.U;
-	dest.V = orig.V;
+	dest.V = orig.V;*/
 }
 /*
 	The method which does final rasterization and stores output in imageData.
