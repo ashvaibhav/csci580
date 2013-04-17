@@ -1,4 +1,4 @@
-//var imageData = '';
+var isAmbientOcclusion = false;
 var vertices = new Array();
 //var imageDataFinal = '';
 var c = "";
@@ -361,9 +361,11 @@ function renderData(imageData, anim){
 	var Xsp = calculateXsp(Xs, Ys, Zmax, d);
 	var Xpi = calculateXpi(d);
 	var Xiw = calculateXiw(Cam, C)
-	var Xwm = calculateXwm(worldMatrix) 
+	var Xwm = calculateXwm(worldMatrix)
 	data.Xsp = Xsp;
 	data.Xpi = Xpi;
+	data.Xiw = Xiw;
+	data.Xwm = Xwm;
 
 	var globalMatrix = new Array();
 	globalMatrix.push(Xsp);
@@ -469,6 +471,11 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 	var newVertices = new Array();
 	var vertex = '';
 	var newVertex = {};
+
+	var camSpaceVertices = new Array();
+	var newCamSpaceVertex = '';
+	var camManipMatrix = matrixMultiply(data.Xwm, data.Xiw);
+
 	for(var index in objectVertices){
 		vertex = multMatrixVector(
 				//[[objectVertices[index].x,0,0,0],[0,objectVertices[index].y,0,0],[0,0,objectVertices[index].z,0],[1,1,1,1]], 
@@ -484,7 +491,7 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 
 		vertex = multMatrixVector(
 				[objectVertices[index].nx, objectVertices[index].ny, objectVertices[index].nz, 1],
-				Xi	
+				Xi
 			)
 		//Normals from object space to camera space
 		newVertex.nx = vertex[0]/vertex[3]
@@ -510,6 +517,23 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 		// console.log(index +" "+newVertex.r +" "+newVertex.g+" "+newVertex.b)
 
 		newVertices.push(newVertex)
+
+		//transforming vertices from world space to camera space
+		if(isAmbientOcclusion){
+			vertex = multMatrixVector(
+					[objectVertices[index].nx, objectVertices[index].ny, objectVertices[index].nz, 1],
+					camManipMatrix
+				);
+			newCamSpaceVertex = {};
+			copyVertex(newCamSpaceVertex, vertex);
+			newCamSpaceVertex.x = vertex[0]/vertex[3]
+			newCamSpaceVertex.y = vertex[1]/vertex[3]
+			newCamSpaceVertex.z = vertex[2]/vertex[3]
+			camSpaceVertices.push(newCamSpaceVertex);
+		}
+	}
+	if(isAmbientOcclusion){
+		data.camSpaceVertices = camSpaceVertices;
 	}
 	return newVertices;
 }
@@ -725,8 +749,10 @@ function showFinalImage(vertices, imageData, data){
 	/* End of code for antialiasing */
 	console.log('completed drawing triangle')	
 	/*	Adding ambientOcclusion */
-	data.distanceThreshold = 20;
-	ambientOcclusion(imageData, vertices, data);
+	if(isAmbientOcclusion){
+		data.distanceThreshold = 20;
+		ambientOcclusion(imageData, vertices, data);
+	}
 	var element = document.getElementById("canvas1");
 	var width = parseInt(element.getAttribute("width"));
 	var height = parseInt(element.getAttribute("height"));
@@ -2054,6 +2080,7 @@ function pixelExists(pixel){
 	return false;
 }
 function ambientOcclusion(imageData, vertices, data){
+	vertices = data.camSpaceVertices;
 	var Rays = getRays();
 	var counter = 0;
 	for(var i in imageData){
@@ -2064,10 +2091,11 @@ function ambientOcclusion(imageData, vertices, data){
 				continue;
 			if(i==160&&j==70)
 				alert(pixel.z);
-			var norm = multMatrixVector(
-					[pixel.nx, pixel.ny, pixel.nz, 1],
-					matrixMultiply(data.Xpi, data.Xsp)
-					);
+			// var norm = multMatrixVector(
+			// 		[pixel.nx, pixel.ny, pixel.nz, 1],
+			// 		matrixMultiply(data.Xpi, data.Xsp)
+			// 		);
+			var norm = [pixel.nx, pixel.ny, pixel.nz];
 			counter = 0;
 			for(var rayIndex in Rays){
 				//take dotproduct of Rays with normals of pixel
