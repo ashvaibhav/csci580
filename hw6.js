@@ -515,8 +515,7 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 		newVertex.g = Color.g;
 		newVertex.b = Color.b;
 		// console.log(index +" "+newVertex.r +" "+newVertex.g+" "+newVertex.b)
-
-		newVertices.push(newVertex)
+		
 
 		//transforming vertices from world space to camera space
 		if(isAmbientOcclusion){
@@ -530,7 +529,10 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 			newCamSpaceVertex.y = vertex[1]/vertex[3]
 			newCamSpaceVertex.z = vertex[2]/vertex[3]
 			camSpaceVertices.push(newCamSpaceVertex);
+			newVertices.camSpaceCoords = newCamSpaceVertex;
 		}
+
+		newVertices.push(newVertex)
 	}
 	if(isAmbientOcclusion){
 		data.camSpaceVertices = camSpaceVertices;
@@ -1149,6 +1151,13 @@ function calculateVertice(i,j,z,verticeA,verticeB,verticeC,data){
 						vertex.nx = alpha*verticeA.nx + beta*verticeB.nx + gamma*verticeC.nx;
 						vertex.ny = alpha*verticeA.ny + beta*verticeB.ny + gamma*verticeC.ny;
 						vertex.nz = alpha*verticeA.nz + beta*verticeB.nz + gamma*verticeC.nz;
+
+						if(isAmbientOcclusion){
+							vertex.camSpaceCoords = {};
+							vertex.camSpaceCoords.x = alpha*verticeA.camSpaceCoords.x + beta*verticeB.camSpaceCoords.x + gamma*verticeC.camSpaceCoords.x;
+							vertex.camSpaceCoords.y = alpha*verticeA.camSpaceCoords.y + beta*verticeB.camSpaceCoords.y + gamma*verticeC.camSpaceCoords.y;
+							vertex.camSpaceCoords.z = alpha*verticeA.camSpaceCoords.z + beta*verticeB.camSpaceCoords.z + gamma*verticeC.camSpaceCoords.z;
+						}
 						if(data.isTextureMapping){//if you checked the texturize button
 							if(textureData && !data.isAnimationOn){//if textureData was loaded externally && animation is off
 							
@@ -2102,12 +2111,12 @@ function ambientOcclusion(imageData, vertices, data){
 				var dotProduct = dotProd(Rays[rayIndex], {x:norm[0], y:norm[1], z:norm[2]});
 				if(dotProduct>0){
 					var pointOnRay = {};
-					pointOnRay.x = Rays[rayIndex].x+pixel.x;
-					pointOnRay.y = Rays[rayIndex].y+pixel.y;
-					pointOnRay.z = Rays[rayIndex].z+pixel.z;
-					pixel.x += Rays[rayIndex].x*0.0001;
-					pixel.y += Rays[rayIndex].y*0.0001;
-					pixel.z += Rays[rayIndex].z*0.0001;
+					pointOnRay.x = Rays[rayIndex].x+pixel.camSpaceCoords.x;
+					pointOnRay.y = Rays[rayIndex].y+pixel.camSpaceCoords.y;
+					pointOnRay.z = Rays[rayIndex].z+pixel.camSpaceCoords.z;
+					pixel.x = pixel.camSpaceCoords.x + Rays[rayIndex].x*0.0001;
+					pixel.y = pixel.camSpaceCoords.y + Rays[rayIndex].y*0.0001;
+					pixel.z = pixel.camSpaceCoords.z + Rays[rayIndex].z*0.0001;
 
 					for(var verticeIndex in vertices){
 						if(verticeIndex%3==2){
