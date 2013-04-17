@@ -3,7 +3,7 @@ var vertices = new Array();
 //var imageDataFinal = '';
 var c = "";
 var reader = new FileReader();
-var showWireframe = fa0lse;
+var showWireframe = false;
 var vector = {x:0, y:0, z:0}
 function render(){
 	document.getElementById('status2').innerHTML="";
@@ -362,7 +362,8 @@ function renderData(imageData, anim){
 	var Xpi = calculateXpi(d);
 	var Xiw = calculateXiw(Cam, C)
 	var Xwm = calculateXwm(worldMatrix) 
-
+	data.Xsp = Xsp;
+	data.Xpi = Xpi;
 
 	var globalMatrix = new Array();
 	globalMatrix.push(Xsp);
@@ -723,7 +724,9 @@ function showFinalImage(vertices, imageData, data){
 	antiAlias(imageData, imageDataContent, jitBox);
 	/* End of code for antialiasing */
 	console.log('completed drawing triangle')	
-
+	/*	Adding ambientOcclusion */
+	data.distanceThreshold = 20;
+	ambientOcclusion(imageData, vertices, data);
 	var element = document.getElementById("canvas1");
 	var width = parseInt(element.getAttribute("width"));
 	var height = parseInt(element.getAttribute("height"));
@@ -1078,7 +1081,7 @@ function calculateVertice(i,j,z,verticeA,verticeB,verticeC,data){
 								color.g = (alpha*colorA.g + beta*colorB.g + gamma*colorC.g)*255;
 								color.b = (alpha*colorA.b + beta*colorB.b + gamma*colorC.b)*255;
 
-								console.log("Vertice color:r:"+color.r+" g:"+color.g+" b:"+color.b);
+								//console.log("Vertice color:r:"+color.r+" g:"+color.g+" b:"+color.b);
 								vertex.r = (color.r);
 								vertex.g = (color.g);
 								vertex.b = (color.b);
@@ -1623,7 +1626,7 @@ function proceduralTexture(u, v, data){
 	Color.r += noiser;
 	Color.g += noiseg;
 	Color.b += noiseb;
-	console.log("u_:"+u_+" g:"+Color.g+" b:"+Color.b);
+	//console.log("u_:"+u_+" g:"+Color.g+" b:"+Color.b);
 	Color.r = (Color.r<0?((Color.r+1)/2):(Color.r>1?1:Color.r))*255;
 	Color.g = (Color.g<0?0:(Color.g>1?1:Color.g))*255;
 	Color.b = (Color.b<0?0:(Color.b>1?1:Color.b))*255;
@@ -1706,13 +1709,6 @@ function computeTexture(u, v){
 	// width = height-width;
 	// height = height-width;
 	//interpolating part 2 i.e. interpolating colors
-	if(j==0||i==0){
-		console.log("->s:"+s+" t:"+t+"U:"+U+" V:"+V+" i:"+i+" j:"+j+" V%1:"+eval(V%1)+" V!=V%1:"+eval(V!=V%1));
-		// console.log(textureData.matrix[height][width]);
-		// console.log(textureData.matrix[height-1][width]);
-		// console.log(textureData.matrix[height][width-1]);
-		// console.log(textureData.matrix[height-1][width-1]);
-	}
 	//Testing code in false... should not be required.
 	if(false){
 		console.log("a:"+a+" b:"+b);
@@ -2018,4 +2014,190 @@ function shade2(norm)
   color[2] = coef*0.88*255;
   //console.log(color[0]+" "+color[1]+" "+color[2])
   return color;
+}
+function getRays(){
+	var Rays = 		[
+/*					{x:0,	y:0,	z:0},
+					{x:0,	y:0,	z:1},
+					{x:0,	y:1,	z:0},
+					{x:0,	y:1,	z:1},
+					{x:1,	y:0,	z:0},
+					{x:1,	y:0,	z:1},
+					{x:1,	y:1,	z:0},
+					{x:1,	y:1,	z:1},
+*/
+					// {x:0,	y:0,	z:0},
+					{x:0,	y:0.5,	z:0},
+					{x:0,	y:1,	z:0},
+					{x:0.5,	y:0,	z:0},
+					{x:0.5,	y:0.5,	z:0},
+					{x:0.5,	y:1,	z:0},
+					{x:1,	y:0,	z:0},
+					{x:1,	y:0.5,	z:0},
+					{x:1,	y:1,	z:0},
+					{x:0,	y:0,	z:1},
+					{x:0,	y:0.5,	z:1},
+					{x:0,	y:1,	z:1},
+					{x:0.5,	y:0,	z:1},
+					{x:0.5,	y:0.5,	z:1},
+					{x:0.5,	y:1,	z:1},
+					{x:1,	y:0,	z:1},
+					{x:1,	y:0.5,	z:1},
+					{x:1,	y:1,	z:1}
+
+				];
+	return Rays;
+}
+function pixelExists(pixel){
+	if(pixel  && pixel.r && pixel.g && pixel.b && pixel.nx && pixel.ny && pixel.nz && pixel.x && pixel.y && pixel.z) 
+		return true;
+	return false;
+}
+function ambientOcclusion(imageData, vertices, data){
+	var Rays = getRays();
+	var counter = 0;
+	for(var i in imageData){
+		for(var j in imageData[i]){
+			var pixel = imageData[i][j];
+			//transform normals of the pixel by multiplying by Xpi and Xsp
+			if(!pixelExists(pixel))
+				continue;
+			if(i==160&&j==70)
+				alert(pixel.z);
+			var norm = multMatrixVector(
+					[pixel.nx, pixel.ny, pixel.nz, 1],
+					matrixMultiply(data.Xpi, data.Xsp)
+					);
+			counter = 0;
+			for(var rayIndex in Rays){
+				//take dotproduct of Rays with normals of pixel
+				var dotProduct = dotProd(Rays[rayIndex], {x:norm[0], y:norm[1], z:norm[2]});
+				if(dotProduct>0){
+					var pointOnRay = {};
+					pointOnRay.x = Rays[rayIndex].x+pixel.x;
+					pointOnRay.y = Rays[rayIndex].y+pixel.y;
+					pointOnRay.z = Rays[rayIndex].z+pixel.z;
+					pixel.x += Rays[rayIndex].x*0.0001;
+					pixel.y += Rays[rayIndex].y*0.0001;
+					pixel.z += Rays[rayIndex].z*0.0001;
+
+					for(var verticeIndex in vertices){
+						if(verticeIndex%3==2){
+							var triangle = [vertices[verticeIndex-2], vertices[verticeIndex-1], vertices[verticeIndex]];
+							var intersectionPoint = {};
+							var isIntersect = intersectRayTriangle([pixel, pointOnRay], triangle, intersectionPoint);
+							if(isIntersect==1){
+								//store the z value of triangle
+								//identify the distance between intersectionPoint and pixel.
+								var distance = calculateDistance(pixel, intersectionPoint);
+								if(distance<data.distanceThreshold){
+									counter++;
+								}
+							}
+						}
+					}
+				}
+			}
+			//counter represents number of intersections
+			//darken the point
+			pixel.r -= 20*(counter/Rays.length);
+			pixel.g -= 20*(counter/Rays.length);
+			pixel.b -= 20*(counter/Rays.length);
+		}
+	}
+}
+
+function calculateDistance(pointA, pointB){
+	return 5;//Math.sqrt(Math.pow(pointA.x-pointB.x,2)+Math.pow(pointA.y-pointB.y,2)+Math.pow(pointA.z-pointB.z,2));
+}
+
+// intersectRayTriangle(): find the 3D intersection of a ray with a triangle
+//    Input:   ray R vector[2], and a triangle T vector[3]
+//    Output:  I = intersection point (when it exists) vector
+//    Return: -1 = triangle is degenerate (a segment or point)
+//             0 =  disjoint (no intersect)
+//             1 =  intersect in unique point I1
+//             2 =  are in the same plane
+
+
+function intersectRayTriangle(R, T, I) {
+	// triangle vectors
+	var u = { x: 0, y: 0, z: 0 };
+	var v = { x: 0, y: 0, z: 0 };
+	var n = { x: 0, y: 0, z: 0 };
+
+	// ray vectors
+	var dir = { x: 0, y: 0, z: 0 };
+	var w0 = { x: 0, y: 0, z: 0 };
+	var w = { x: 0, y: 0, z: 0 };
+	var r, a, b;			// params to calc ray-plane intersect
+
+	// get triangle edge vectors and plane normal
+	u.x = T[1].x - T[0].x;
+	u.y = T[1].y - T[0].y;
+	u.z = T[1].z - T[0].z;
+
+	v.x = T[2].x - T[0].x;
+	v.y = T[2].y - T[0].y;
+	v.z = T[2].z - T[0].z;
+
+	n = crossProd(u, v);		// cross product
+	if (n == { x: 0, y: 0, z: 0 })	// triangle is degenerate
+		return -1;              // do not deal with this case
+
+	// ray direction vector
+	dir.x = R[1].x - R[0].x;
+	dir.y = R[1].y - R[0].y;
+	dir.z = R[1].z - R[0].z;
+
+	w0.x = R[0].x - T[0].x;
+	w0.y = R[0].y - T[0].y;
+	w0.z = R[0].z - T[0].z;
+
+
+	a = -dotProd(n, w0);
+	b = dotProd(n, dir);
+
+	if (Math.abs(b) < 0.0000001) {	// ray is  parallel to triangle plane
+		if (a == 0)					// ray lies in triangle plane
+			return 2;
+		else return 0;				// ray disjoint from plane
+	}
+
+	// get intersect point of ray with triangle plane
+	r = a / b;
+	if (r < 0.0)                    // ray goes away from triangle
+		return 0;                   // => no intersect
+	// for a segment, also test if (r > 1.0) => no intersect
+
+	// intersect point of ray and plane
+	I.x = R[0].x + r * dir.x;
+	I.y = R[0].y + r * dir.y;
+	I.z = R[0].z + r * dir.z;
+
+	// is I inside T?
+	var uu, uv, vv, wu, wv, D;
+	uu = dotProd(u, u);
+	uv = dotProd(u, v);
+	vv = dotProd(v, v);
+
+	w.x = I.x - T[0].x;
+	w.y = I.y - T[0].y;
+	w.z = I.z - T[0].z;
+
+
+	wu = dotProd(w, u);
+	wv = dotProd(w, v);
+	D = uv * uv - uu * vv;
+
+	// get and test parametric coords
+	var s, t;
+	s = (uv * wv - vv * wu) / D;
+	if (s < 0.0 || s > 1.0)         // I is outside T
+		return 0;
+	t = (uv * wu - uu * wv) / D;
+	if (t < 0.0 || (s + t) > 1.0)  // I is outside T
+		return 0;
+
+	return 1;                       // I is in T
 }
