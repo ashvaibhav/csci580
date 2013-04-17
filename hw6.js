@@ -1,4 +1,3 @@
-var isAmbientOcclusion = false;
 var vertices = new Array();
 //var imageDataFinal = '';
 var c = "";
@@ -462,6 +461,7 @@ function getUserInputData(){
 	data.sy = sy?sy:1;
 	data.sz = sz?sz:1;
 	data.wf = document.getElementById("wf")?document.getElementById("wf").checked:'';
+	data.isAmbientOcclusion = document.getElementById("ambientOcclusion")?document.getElementById("ambientOcclusion").checked:false;
 	return data
 }
 function applyXForms(objectVertices, Xsm, Xi, data){
@@ -518,7 +518,7 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 		
 
 		//transforming vertices from world space to camera space
-		if(isAmbientOcclusion){
+		if(data.isAmbientOcclusion){
 			vertex = multMatrixVector(
 					[objectVertices[index].nx, objectVertices[index].ny, objectVertices[index].nz, 1],
 					camManipMatrix
@@ -534,7 +534,7 @@ function applyXForms(objectVertices, Xsm, Xi, data){
 
 		newVertices.push(newVertex)
 	}
-	if(isAmbientOcclusion){
+	if(data.isAmbientOcclusion){
 		data.camSpaceVertices = camSpaceVertices;
 	}
 	return newVertices;
@@ -751,7 +751,7 @@ function showFinalImage(vertices, imageData, data){
 	/* End of code for antialiasing */
 	console.log('completed drawing triangle')	
 	/*	Adding ambientOcclusion */
-	if(isAmbientOcclusion){
+	if(data.isAmbientOcclusion){
 		data.distanceThreshold = 20;
 		ambientOcclusion(imageData, vertices, data);
 	}
@@ -1156,7 +1156,7 @@ function calculateVertice(i,j,z,verticeA,verticeB,verticeC,data){
 						vertex.ny = alpha*verticeA.ny + beta*verticeB.ny + gamma*verticeC.ny;
 						vertex.nz = alpha*verticeA.nz + beta*verticeB.nz + gamma*verticeC.nz;
 
-						if(isAmbientOcclusion){
+						if(data.isAmbientOcclusion){
 							vertex.camSpaceCoords = {};
 							vertex.camSpaceCoords.x = alpha*verticeA.camSpaceCoords.x + beta*verticeB.camSpaceCoords.x + gamma*verticeC.camSpaceCoords.x;
 							vertex.camSpaceCoords.y = alpha*verticeA.camSpaceCoords.y + beta*verticeB.camSpaceCoords.y + gamma*verticeC.camSpaceCoords.y;
@@ -2149,7 +2149,7 @@ function ambientOcclusion(imageData, vertices, data){
 }
 
 function calculateDistance(pointA, pointB){
-	return 5;//Math.sqrt(Math.pow(pointA.x-pointB.x,2)+Math.pow(pointA.y-pointB.y,2)+Math.pow(pointA.z-pointB.z,2));
+	return Math.sqrt(Math.pow(pointA.x-pointB.x,2)+Math.pow(pointA.y-pointB.y,2)+Math.pow(pointA.z-pointB.z,2));
 }
 
 // intersectRayTriangle(): find the 3D intersection of a ray with a triangle
@@ -2240,5 +2240,14 @@ function intersectRayTriangle(R, T, I) {
 	if (t < 0.0 || (s + t) > 1.0)  // I is outside T
 		return 0;
 
-	return 1;                       // I is in T
+	// is I between R[0] and R[1]
+	if(
+		((R[0].x < I.x && I.x < R[1].x)||(R[0].x > I.x && I.x > R[1].x)) &&
+		((R[0].y < I.y && I.y < R[1].y)||(R[0].y > I.y && I.y > R[1].y)) &&
+		((R[0].z < I.z && I.z < R[1].z)||(R[0].z > I.z && I.z > R[1].z))
+	){
+		return 1;                       // I is in T
+	}
+
+	return 0;
 }
