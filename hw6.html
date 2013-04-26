@@ -5,7 +5,6 @@
 		background:#000000;
 	}
 </style>
-<script type='text/javascript' src='hw6.js'></script>
 </head>
 <body  onload='document.getElementById("canvas1").addEventListener("mousedown", showMousePosition, false);'> 
 	<div id='status'></div>
@@ -33,7 +32,7 @@
 			<input type=radio name=shader value='GOURAUD'>GOURAUD
 			<input type=radio name=shader CHECKED value='PHONG'>PHONG<BR>
 		Texture Mapping
-			<input id='texture' type='checkbox' CHECKED><BR>
+			<input id='texture' type='checkbox'><BR>
 		Ambient Occlusion
 			<input id='ambientOcclusion' type='checkbox' CHECKED>
 		<!-- Noise
@@ -51,8 +50,9 @@
 			<input type=radio name=animation CHECKED value='proceduralTexture'>Texture Mapping
 	<input id='anim' type='button' value='ANIMATE' onClick='javascript:animate();'> -->
 	<div id='data'></div>
-	<canvas id='canvas1' width='256', height='256'>
+	<canvas id='canvas1' width='512', height='512'>
 	</canvas>
 		
 </body>
+<script type='text/javascript' src='hw6.js'></script>
 </html>
