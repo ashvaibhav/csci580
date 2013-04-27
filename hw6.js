@@ -598,10 +598,10 @@ function applyXForms(objectVertices, Xsm, Xi, data) {
 
 		newVertices.push(newVertex);
 	}
-	if (data.isAmbientOcclusion) {
+	/*if (data.isAmbientOcclusion) {
 		data.camSpaceVertices = camSpaceVertices;
-	}
-	return newVertices;
+	}*/
+	return {vertices:newVertices, camSpaceVertices:camSpaceVertices};
 }
 function calculateXwm(worldMatrix) {
 	var Xwm = computeMatrixStack(worldMatrix)
@@ -791,7 +791,9 @@ function showFinalImage(vertices, imageData, data) {
 			var item = itemsArray[itemIndex];
 			data.Ks = item.ks || { r: 0.3, g: 0.3, b: 0.3 };	
 			data.Kd = item.kd || { r: 0.7, g: 0.7, b: 0.7 };
-			vertices = applyXForms(item.vertices, data.Xsm, data.Xi, data)			
+			var result = applyXForms(item.vertices, data.Xsm, data.Xi, data);
+			vertices = result.vertices;
+			item.camSpaceVertices = result.camSpaceVertices;
 			for (var index in vertices) {
 				if (index % 3 == 2) {
 
@@ -2193,7 +2195,32 @@ function ambientOcclusion(imageData, vertices, data) {
 					closestTriangleDistance = Number.MAX_VALUE;
 					closestPoint = {};
 
-					for (var verticeIndex = 0; verticeIndex < data.camSpaceVertices.length - 2; verticeIndex += 3) {
+					for(var itemIndex in itemsArray){
+						var item = itemsArray[itemIndex];
+						for(var verticeIndex=0; verticeIndex < item.camSpaceVertices.length -2; verticeIndex += 3){							
+							var triangle = [item.camSpaceVertices[verticeIndex], item.camSpaceVertices[verticeIndex + 1], item.camSpaceVertices[verticeIndex + 2]];
+							var intersectionPoint = {};
+							var isIntersect = intersectRayTriangle([pixel, pointOnRay], triangle, intersectionPoint);
+
+							if (isIntersect == 1) {
+								//store the z value of triangle
+								//identify the distance between intersectionPoint and pixel.
+								var distance = calculateDistance(pixel, intersectionPoint);
+
+
+								if (distance < closestTriangleDistance && distance < data.distanceThreshold) {
+									//counter++;
+									//break;
+									closestTriangleDistance = distance;
+									closestPoint.x = intersectionPoint.x;
+									closestPoint.y = intersectionPoint.y;
+									closestPoint.z = intersectionPoint.z;
+								}
+
+							}		
+						}
+					}
+					/*for (var verticeIndex = 0; verticeIndex < data.camSpaceVertices.length - 2; verticeIndex += 3) {
 						var triangle = [data.camSpaceVertices[verticeIndex], data.camSpaceVertices[verticeIndex + 1], data.camSpaceVertices[verticeIndex + 2]];
 						var intersectionPoint = {};
 						var isIntersect = intersectRayTriangle([pixel, pointOnRay], triangle, intersectionPoint);
@@ -2214,9 +2241,7 @@ function ambientOcclusion(imageData, vertices, data) {
 							}
 
 						}
-					}
-
-
+					}*/
 
 					if (closestTriangleDistance < data.distanceThreshold) {
 						counter += Math.pow((data.distanceThreshold - closestTriangleDistance) / data.distanceThreshold, data.ambientRatio);
