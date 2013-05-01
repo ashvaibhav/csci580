@@ -565,20 +565,20 @@ function calculateXsp(Xs, Ys, Zmax, d){
 	return Xsp;
 }
 function calculateWorldMatrix(worldMatrix, data){
-	var FOV = 	data.FOV?data.FOV: 			35;
-	var C = 	data.C?data.C: 				{x:-10, y:5, z:-10};
+	var FOV = 	data.FOV?data.FOV: 			20;
+	var C = 	data.C?data.C: 				{x:-10, y:5, z:-25};
 	var L = 	data.L?data.L: 				{x:0, y:0, z:0};
 	var UP = 	data.UP?data.UP: 			{x:0, y:1, z:0};
 	
 	showWireframe = data.wf
-	if(!data.defaultCamera){
+/*	if(!data.defaultCamera){
 		//Rotating about x, y, z
 		FOV=63.7;//53.7
 		C = {x:-3, y:-25, z:-4};//{x:13.2, y:-8.7, z:-14.8}
 		L = {x:7.8, y:0.7,z:6.5};//{x:0.8, y:0.7, z:4.5}
 		UP = {x:-0.2, y:1.0, z:0}
 	}
-
+*/
 		worldMatrix.push(translate(data.tx,data.ty,data.tz))
 		worldMatrix.push(scale(data.sx,data.sy,data.sz))
 		switch(data.rotDir){
@@ -596,7 +596,7 @@ function calculateWorldMatrix(worldMatrix, data){
 				break;
 			default:
 		}
-
+/*
 		worldMatrix.push(
 				[
 					[3.25,	0.0,	0.0,	0.0],
@@ -621,6 +621,10 @@ function calculateWorldMatrix(worldMatrix, data){
 					[0.0,	0.0,	0.0,	1.0]
 				]
 			);
+*/
+		worldMatrix.push(rotateX(-25));
+		worldMatrix.push(rotateY(210));
+
 		data.FOV = FOV;
 		data.C = C;
 		data.L = L;
@@ -2066,15 +2070,15 @@ function getRays(){
 					{x:1,	y:1,	z:1},
 */
 					// {x:0,	y:0,	z:0},
-					{x:0,	y:0.5,	z:0},
+					//{x:0,	y:0.5,	z:0},
 					{x:0,	y:1,	z:0},
-					{x:0.5,	y:0,	z:0},
+					//{x:0.5,	y:0,	z:0},
 					{x:0.5,	y:0.5,	z:0},
-					{x:0.5,	y:1,	z:0},
-					{x:1,	y:0,	z:0},
-					{x:1,	y:0.5,	z:0},
-					{x:1,	y:1,	z:0},
-					{x:0,	y:0,	z:1},
+					//{x:0.5,	y:1,	z:0},
+					//{x:1,	y:0,	z:0},
+					{x:1,	y:-0.5,	z:0},
+					{x:-1,	y:1,	z:0},
+					/*{x:0,	y:0,	z:1},
 					{x:0,	y:0.5,	z:1},
 					{x:0,	y:1,	z:1},
 					{x:0.5,	y:0,	z:1},
@@ -2082,7 +2086,7 @@ function getRays(){
 					{x:0.5,	y:1,	z:1},
 					{x:1,	y:0,	z:1},
 					{x:1,	y:0.5,	z:1},
-					{x:1,	y:1,	z:1}
+					{x:1,	y:1,	z:1}*/
 
 				];
 	return Rays;
@@ -2122,9 +2126,9 @@ function ambientOcclusion(imageData, vertices, data){
 					pixel.y = pixel.camSpaceCoords.y + Rays[rayIndex].y*0.0001;
 					pixel.z = pixel.camSpaceCoords.z + Rays[rayIndex].z*0.0001;
 
-					for(var verticeIndex in vertices){
-						if(verticeIndex%3==2){
-							var triangle = [vertices[verticeIndex-2], vertices[verticeIndex-1], vertices[verticeIndex]];
+					for(var verticeIndex = 0; verticeIndex<vertices.length;verticeIndex+=3){
+						//if(verticeIndex%3==2){
+							var triangle = [vertices[verticeIndex+0], vertices[verticeIndex+1], vertices[verticeIndex+2]];
 							var intersectionPoint = {};
 							var isIntersect = intersectRayTriangle([pixel, pointOnRay], triangle, intersectionPoint);
 							if(isIntersect==1){
@@ -2135,15 +2139,15 @@ function ambientOcclusion(imageData, vertices, data){
 									counter++;
 								}
 							}
-						}
+						//}
 					}
 				}
 			}
 			//counter represents number of intersections
 			//darken the point
-			pixel.r -= 20*(counter/Rays.length);
-			pixel.g -= 20*(counter/Rays.length);
-			pixel.b -= 20*(counter/Rays.length);
+			pixel.r -= 200*(counter/Rays.length);
+			pixel.g -= 200*(counter/Rays.length);
+			pixel.b -= 200*(counter/Rays.length);
 		}
 	}
 }
